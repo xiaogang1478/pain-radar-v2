@@ -1,5 +1,6 @@
 import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
+import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 
@@ -44,15 +45,22 @@ function Button({
   className,
   variant = "default",
   size = "default",
+  href,
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
-  return (
+}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants> & { href?: string }) {
+  const buttonContent = (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
   )
+  
+  if (href) {
+    return <Link href={href}>{buttonContent}</Link>
+  }
+  
+  return buttonContent
 }
 
 export { Button, buttonVariants }

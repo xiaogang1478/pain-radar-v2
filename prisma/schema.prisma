@@ -1,0 +1,121 @@
+// Prisma schema for 痛点雷达平台
+// PostgreSQL Database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// 用户模型
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique // 邮箱（唯一）
+  passwordHash  String    @map("password_hash") // 密码哈希
+  nickname      String?   // 昵称
+  avatar        String?   // 头像URL
+  memberType    MemberType @default(FREE) @map("member_type") // 会员类型
+  memberExpire  DateTime? @map("member_expire") // 会员过期时间
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // 关系
+  keywords      Keyword[]   // 关键词监控
+  favorites     Favorite[]  // 收藏
+
+  @@map("users")
+}
+
+// 会员类型枚举
+enum MemberType {
+  FREE      // 免费用户
+  PRO       // 专业版
+  ENTERPRISE // 企业版
+}
+
+// 平台模型
+model Platform {
+  id      Int     @id @default(autoincrement())
+  hashid  String  @unique // 平台标识
+  name    String  // 平台名称
+  display String  // 显示名称
+  icon    String? // 图标
+  url     String? // 官网
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // 关系
+  hotItems HotItem[]
+
+  @@map("platforms")
+}
+
+// 热点数据模型
+model HotItem {
+  id          Int       @id @default(autoincrement())
+  platformId  Int       @map("platform_id") // 平台ID
+  title       String    // 热点标题
+  url         String?   // 原始链接
+  description String?   // 描述
+  heatValue   Int       @default(0) @map("heat_value") // 热度值
+  extra       String?   // 额外信息
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // 关系
+  platform    Platform   @relation(fields: [platformId], references: [id])
+  painPoints  PainPoint[]
+  favorites   Favorite[]
+
+  @@map("hot_items")
+}
+
+// 痛点模型
+model PainPoint {
+  id              Int       @id @default(autoincrement())
+  hotItemId       Int       @map("hot_item_id") // 关联热点ID
+  title           String    // 痛点标题
+  painLevel       Int       @default(5) @map("pain_level") // 痛度评分（1-10）
+  commercialScore Int       @default(5) @map("commercial_score") // 商业价值评分（1-10）
+  category        String?   // 分类
+  keywords        String?   // 匹配关键词
+  analysis        String?   // AI分析
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  // 关系
+  hotItem  HotItem   @relation(fields: [hotItemId], references: [id])
+  favorites Favorite[]
+
+  @@map("pain_points")
+}
+
+// 关键词监控模型
+model Keyword {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id") // 用户ID
+  keyword     String   // 关键词
+  notifyEmail Boolean  @default(true) @map("notify_email") // 是否邮件通知
+  isActive    Boolean  @default(true) @map("is_active") // 是否激活
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // 关系
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("keywords")
+}
+
+// 收藏模型
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @map("user_id") // 用户ID
+  hotItemId  Int?     @map("hot_item_id") // 热点ID
+  painPointId Int?    @map("pain_point_id") // 痛点ID
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // 关系
+  user      User      @relation(fields: [userId], references: [id])
+  hotItem   HotItem?  @relation(fields: [hotItemId], references: [id])
+  painPoint PainPoint? @relation(fields: [painPointId], references: [id])
+
+  @@map("favorites")
+}
