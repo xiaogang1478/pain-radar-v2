@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import prisma from '@/lib/prisma';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia'
-});
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
+// 获取Stripe实例（延迟初始化）
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(key, { apiVersion: '2026-03-25.dahlia' });
+}
 
 // 计算会员过期时间
 function calculateExpireDate(period: string): Date {
@@ -34,10 +37,12 @@ function mapPlanToMemberType(plan: string): string {
 export async function POST(request: NextRequest) {
   const body = await request.text();
   const signature = request.headers.get('stripe-signature') || '';
+  const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
   
   let event: Stripe.Event;
   
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
   } catch (err: any) {
     console.error('Webhook签名验证失败:', err.message);

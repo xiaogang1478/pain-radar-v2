@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
-
-interface User { id: number; email: string; nickname: string; memberType: string; }
+import SubscribeModal from '@/components/payment/SubscribeModal';
 
 const plans = [
   {
+    id: 'FREE',
     name: '免费版',
-    price: '¥0',
+    price: 0,
     period: '永久',
     description: '适合个人探索',
     features: [
@@ -25,13 +26,13 @@ const plans = [
       'API访问',
     ],
     cta: '免费开始',
-    href: '/register',
     popular: false,
   },
   {
+    id: 'PRO',
     name: '专业版',
-    price: '¥99',
-    period: '月付',
+    price: 99,
+    period: '月',
     description: '适合创业者和独立开发者',
     features: [
       '无限热点数据访问',
@@ -41,17 +42,16 @@ const plans = [
       '每日邮件推送',
       '数据导出',
     ],
-    notIncluded: [
-      'API访问',
-    ],
+    notIncluded: ['API访问'],
     cta: '立即升级',
-    href: '/register?plan=pro',
     popular: true,
+    priceData: { monthly: 99, yearly: 899 },
   },
   {
+    id: 'PREMIUM',
     name: '团队版',
-    price: '¥299',
-    period: '月付',
+    price: 299,
+    period: '月',
     description: '适合创业团队和研究机构',
     features: [
       '专业版全部功能',
@@ -63,8 +63,8 @@ const plans = [
     ],
     notIncluded: [],
     cta: '联系我们',
-    href: '/contact',
     popular: false,
+    href: '/contact',
   },
 ];
 
@@ -92,9 +92,12 @@ const faqs = [
 ];
 
 export default function PricingPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<{ id: number; email: string; nickname: string; memberType: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showSubscribe, setShowSubscribe] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<{ id: string; name: string; price: { monthly: number; yearly: number }; features: string[] } | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     fetch('/api/auth/me')
@@ -105,6 +108,27 @@ export default function PricingPage() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const handleUpgrade = (plan: typeof plans[0]) => {
+    if (plan.id === 'FREE') {
+      router.push('/register');
+      return;
+    }
+    
+    if (!user) {
+      router.push('/login?redirect=/pricing');
+      return;
+    }
+    
+    // 已登录，打开订阅弹窗
+    setSelectedPlan({
+      id: plan.id,
+      name: plan.name,
+      price: plan.priceData || { monthly: plan.price, yearly: plan.price * 12 },
+      features: plan.features,
+    });
+    setShowSubscribe(true);
+  };
 
   return (
     <div style={{
@@ -192,7 +216,7 @@ export default function PricingPage() {
                   fontWeight: 800,
                   color: 'var(--text-primary)'
                 }}>
-                  {plan.price}
+                  {plan.price === 0 ? '¥0' : `¥${plan.price}`}
                 </span>
                 <span style={{
                   fontSize: '14px',
@@ -203,22 +227,42 @@ export default function PricingPage() {
                 </span>
               </div>
 
-              <Link
-                href={plan.href}
-                className={plan.popular ? 'btn-primary' : 'btn-secondary'}
-                style={{
-                  display: 'block',
-                  textAlign: 'center',
-                  textDecoration: 'none',
-                  padding: '14px 24px',
-                  borderRadius: 'var(--radius-md)',
-                  fontWeight: 600,
-                  marginBottom: '32px',
-                  transition: 'all var(--transition-fast)'
-                }}
-              >
-                {plan.cta}
-              </Link>
+              {plan.href ? (
+                <Link
+                  href={plan.href}
+                  className={plan.popular ? 'btn-primary' : 'btn-secondary'}
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    padding: '14px 24px',
+                    borderRadius: 'var(--radius-md)',
+                    fontWeight: 600,
+                    marginBottom: '32px',
+                  }}
+                >
+                  {plan.cta}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => handleUpgrade(plan)}
+                  className={plan.popular ? 'btn-primary' : 'btn-secondary'}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    textAlign: 'center',
+                    textDecoration: 'none',
+                    padding: '14px 24px',
+                    borderRadius: 'var(--radius-md)',
+                    fontWeight: 600,
+                    marginBottom: '32px',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {user && plan.id !== 'FREE' ? '立即升级' : plan.cta}
+                </button>
+              )}
 
               <div>
                 <p style={{
@@ -373,6 +417,18 @@ export default function PricingPage() {
           </Link>
         </div>
       </div>
+
+      {/* Subscribe Modal */}
+      {selectedPlan && (
+        <SubscribeModal
+          isOpen={showSubscribe}
+          onClose={() => setShowSubscribe(false)}
+          plan={selectedPlan.id as 'PRO' | 'PREMIUM'}
+          planName={selectedPlan.name}
+          price={selectedPlan.price}
+          features={selectedPlan.features}
+        />
+      )}
     </div>
   );
 }

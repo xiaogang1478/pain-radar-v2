@@ -178,14 +178,14 @@ async function main() {
     let painPointCount = 0;
     
     for (const item of hotItems) {
-      const { isPain, keywords } = isPainPoint(item.title, item.description);
+      const { isPain, keywords } = isPainPoint(item.title, item.description || '');
       
       if (!isPain) continue;
       
-      const painLevel = calculatePainLevel(item.title, item.description);
-      const commercialScore = calculateCommercialScore(item.title, item.description);
-      const category = categorize(item.title, item.description);
-      const analysis = generateAnalysis(item.title, item.description, keywords, painLevel, commercialScore);
+      const painLevel = calculatePainLevel(item.title, item.description || '');
+      const commercialScore = calculateCommercialScore(item.title, item.description || '');
+      const category = categorize(item.title, item.description || '');
+      const analysis = generateAnalysis(item.title, item.description || '', keywords, painLevel, commercialScore);
       
       try {
         await prisma.painPoint.create({

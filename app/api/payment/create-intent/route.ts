@@ -3,10 +3,6 @@ import Stripe from 'stripe';
 import prisma from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia'
-});
-
 // 价格配置（分）
 const PRICES = {
   PRO_MONTHLY: 2800,    // Pro月度 - ¥28
@@ -14,6 +10,15 @@ const PRICES = {
   PREMIUM_MONTHLY: 6800, // Premium月度 - ¥68
   PREMIUM_YEARLY: 49900, // Premium年度 - ¥499
 };
+
+// 获取Stripe实例（延迟初始化）
+function getStripe(): Stripe {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(key, { apiVersion: '2026-03-25.dahlia' });
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,6 +57,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 创建Stripe Payment Intent
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'cny',
