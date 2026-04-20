@@ -26,9 +26,15 @@ export function useRegister() {
   
   return useMutation({
     mutationFn: async (params: { email: string; password: string; nickname?: string }) => {
-      const { data } = await api.post('/auth/register', params);
+      const response = await api.post('/auth/register', params);
+      const data = response.data;
       if (!data.success) {
         throw new Error(data.error);
+      }
+      // 从响应体获取token并存储到localStorage
+      const token = data.token;
+      if (token && typeof window !== 'undefined') {
+        localStorage.setItem('token', token);
       }
       return data;
     },
@@ -44,9 +50,15 @@ export function useLogin() {
   
   return useMutation({
     mutationFn: async (params: { email: string; password: string }) => {
-      const { data } = await api.post('/auth/login', params);
+      const response = await api.post('/auth/login', params);
+      const data = response.data;
       if (!data.success) {
         throw new Error(data.error);
+      }
+      // 从响应体获取token并存储到localStorage（解决HttpOnly cookie不持久化的问题）
+      const token = data.token;
+      if (token && typeof window !== 'undefined') {
+        localStorage.setItem('token', token);
       }
       return data;
     },

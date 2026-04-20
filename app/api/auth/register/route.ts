@@ -57,13 +57,18 @@ export async function POST(request: NextRequest) {
       memberType: user.memberType,
     });
     
-    // 设置cookie
-    const response = NextResponse.json({
+    // 构建响应体（包含token给前端存储）
+    const responseBody = {
       success: true,
-      data: user,
+      data: {
+        ...user,
+        token: token, // 返回token给前端
+      },
       message: '注册成功',
-    });
+    };
     
+    // 创建响应并设置cookie
+    const response = NextResponse.json(responseBody, { status: 200 });
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: false, // HTTP site

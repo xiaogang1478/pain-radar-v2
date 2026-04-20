@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
       memberType: user.memberType,
     });
     
-    // 设置cookie
-    const response = NextResponse.json({
+    // 构建响应体（包含token给前端存储）
+    const responseData = {
       success: true,
       data: {
         id: user.id,
@@ -55,13 +55,16 @@ export async function POST(request: NextRequest) {
         nickname: user.nickname,
         memberType: user.memberType,
         memberExpire: user.memberExpire,
+        token: token, // 返回token给前端
       },
       message: '登录成功',
-    });
+    };
     
+    // 创建响应并设置cookie
+    const response = NextResponse.json(responseData);
     response.cookies.set('token', token, {
       httpOnly: true,
-      secure: false, // HTTP site, no Secure flag
+      secure: false, // HTTP site
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7天
       path: '/',

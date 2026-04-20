@@ -1,9 +1,10 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Check } from 'lucide-react';
+
+interface User { id: number; email: string; nickname: string; memberType: string; }
 
 const plans = [
   {
@@ -14,8 +15,8 @@ const plans = [
     features: [
       '每日查看前50条热点',
       '每日查看前20个痛点',
-      '3个平台筛选',
-      '基础搜索',
+      '5个平台筛选',
+      '基础搜索功能',
     ],
     notIncluded: [
       '关键词监控',
@@ -25,127 +26,351 @@ const plans = [
     ],
     cta: '免费开始',
     href: '/register',
-    highlighted: false,
+    popular: false,
   },
   {
     name: '专业版',
     price: '¥99',
-    period: '/月',
-    description: '适合创业者',
+    period: '月付',
+    description: '适合创业者和独立开发者',
     features: [
-      '无限查看热点和痛点',
-      '所有平台筛选',
-      '高级搜索',
-      '关键词监控（10个）',
-      '邮件通知',
-      '数据导出（CSV）',
-      'API访问（100次/天）',
+      '无限热点数据访问',
+      '无限痛点分析',
+      '全平台筛选',
+      '关键词监控',
+      '每日邮件推送',
+      '数据导出',
     ],
-    notIncluded: [],
-    cta: '升级专业版',
+    notIncluded: [
+      'API访问',
+    ],
+    cta: '立即升级',
     href: '/register?plan=pro',
-    highlighted: true,
+    popular: true,
   },
   {
-    name: '企业版',
+    name: '团队版',
     price: '¥299',
-    period: '/月',
-    description: '适合团队',
+    period: '月付',
+    description: '适合创业团队和研究机构',
     features: [
       '专业版全部功能',
-      '无限关键词监控',
-      '无限数据导出',
-      'API无限访问',
+      'API访问',
+      '团队协作',
+      '优先数据更新',
       '专属客服支持',
-      '自定义数据源（即将支持）',
+      '定制化报告',
     ],
     notIncluded: [],
     cta: '联系我们',
     href: '/contact',
-    highlighted: false,
+    popular: false,
+  },
+];
+
+const faqs = [
+  {
+    q: '免费版有使用限制吗？',
+    a: '免费版每日可查看前50条热点和前20个痛点，适合个人探索和体验产品功能。',
+  },
+  {
+    q: '如何升级到专业版？',
+    a: '注册账号后，在控制台页面点击升级按钮即可开通。支持微信支付和支付宝。',
+  },
+  {
+    q: '支付安全吗？',
+    a: '我们使用Stripe作为支付服务商，支持Visa、Mastercard等国际信用卡，以及微信、支付宝等本地支付方式。所有支付信息都由Stripe处理，我们不会存储您的银行卡信息。',
+  },
+  {
+    q: '可以退款吗？',
+    a: '付费订阅在7天内可申请全额退款，如有质量问题请联系客服处理。',
+  },
+  {
+    q: '团队版有什么特色功能？',
+    a: '团队版提供API访问权限、多人协作功能、优先数据更新通道，以及专属客服支持。',
   },
 ];
 
 export default function PricingPage() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setUser(data.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   return (
-    <div className="container mx-auto px-4 py-16">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">简单透明的定价</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          选择适合你的计划，开始发现创业机会。所有计划都包含痛点发现核心功能。
-        </p>
-      </div>
-      
-      <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-        {plans.map((plan) => (
-          <Card
-            key={plan.name}
-            className={plan.highlighted ? 'border-purple-500 shadow-lg relative' : ''}
-          >
-            {plan.highlighted && (
-              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-purple-500">
-                推荐
-              </Badge>
-            )}
-            <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-6">
-                <span className="text-4xl font-bold">{plan.price}</span>
-                <span className="text-muted-foreground">/{plan.period}</span>
+    <div style={{
+      minHeight: '100vh',
+      background: 'var(--bg-primary)',
+      padding: '40px 24px'
+    }}>
+      <div style={{maxWidth: '1100px', margin: '0 auto'}}>
+        {/* Header */}
+        <div style={{textAlign: 'center', marginBottom: '60px'}}>
+          <h1 style={{
+            fontSize: '2.5rem',
+            fontWeight: 800,
+            marginBottom: '16px',
+            color: 'var(--text-primary)'
+          }}>
+            <span className="text-gradient">简单透明的定价</span>
+          </h1>
+          <p style={{
+            fontSize: '1.1rem',
+            color: 'var(--text-secondary)',
+            maxWidth: '500px',
+            margin: '0 auto'
+          }}>
+            选择适合你的方案，开始发现创业机会
+          </p>
+        </div>
+
+        {/* Pricing Cards */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '24px',
+          marginBottom: '80px'
+        }}>
+          {plans.map((plan, index) => (
+            <div
+              key={index}
+              className={plan.popular ? 'card-elevated' : 'card'}
+              style={{
+                padding: '32px',
+                position: 'relative',
+                border: plan.popular ? '2px solid var(--brand-gold)' : undefined,
+                transform: plan.popular ? 'scale(1.02)' : undefined,
+              }}
+            >
+              {plan.popular && (
+                <div style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: 'linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-dark) 100%)',
+                  color: 'var(--bg-primary)',
+                  padding: '4px 16px',
+                  borderRadius: '20px',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}>
+                  推荐
+                </div>
+              )}
+
+              <div style={{marginBottom: '24px'}}>
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: 700,
+                  color: 'var(--text-primary)',
+                  marginBottom: '8px'
+                }}>
+                  {plan.name}
+                </h3>
+                <p style={{
+                  fontSize: '14px',
+                  color: 'var(--text-muted)',
+                  margin: 0
+                }}>
+                  {plan.description}
+                </p>
               </div>
-              <ul className="space-y-3">
-                {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2">
-                    <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-                {plan.notIncluded.map((feature) => (
-                  <li key={feature} className="flex items-start gap-2 text-muted-foreground">
-                    <span className="h-5 w-5 flex-shrink-0" />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button
-                className="w-full"
-                variant={plan.highlighted ? 'default' : 'outline'}
+
+              <div style={{marginBottom: '24px'}}>
+                <span style={{
+                  fontSize: '3rem',
+                  fontWeight: 800,
+                  color: 'var(--text-primary)'
+                }}>
+                  {plan.price}
+                </span>
+                <span style={{
+                  fontSize: '14px',
+                  color: 'var(--text-muted)',
+                  marginLeft: '4px'
+                }}>
+                  / {plan.period}
+                </span>
+              </div>
+
+              <Link
                 href={plan.href}
+                className={plan.popular ? 'btn-primary' : 'btn-secondary'}
+                style={{
+                  display: 'block',
+                  textAlign: 'center',
+                  textDecoration: 'none',
+                  padding: '14px 24px',
+                  borderRadius: 'var(--radius-md)',
+                  fontWeight: 600,
+                  marginBottom: '32px',
+                  transition: 'all var(--transition-fast)'
+                }}
               >
                 {plan.cta}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-      
-      {/* FAQ */}
-      <div className="mt-16 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8">常见问题</h2>
-        <div className="space-y-4">
-          <div className="bg-muted/30 rounded-lg p-6">
-            <h3 className="font-semibold mb-2">可以随时更换计划吗？</h3>
-            <p className="text-sm text-muted-foreground">
-              可以，你可以随时升级或降级你的计划。升级立即生效，降级将在当前计费周期结束后生效。
-            </p>
+              </Link>
+
+              <div>
+                <p style={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  marginBottom: '12px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
+                }}>
+                  功能清单
+                </p>
+                <ul style={{
+                  listStyle: 'none',
+                  padding: 0,
+                  margin: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px'
+                }}>
+                  {plan.features.map((feature, i) => (
+                    <li key={i} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '14px',
+                      color: 'var(--text-primary)'
+                    }}>
+                      <Check size={16} style={{color: 'var(--accent-green)', flexShrink: 0}} />
+                      {feature}
+                    </li>
+                  ))}
+                  {plan.notIncluded.map((feature, i) => (
+                    <li key={i} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontSize: '14px',
+                      color: 'var(--text-muted)'
+                    }}>
+                      <span style={{opacity: 0.5}}>−</span>
+                      <span style={{textDecoration: 'line-through', opacity: 0.6}}>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* FAQ Section */}
+        <div style={{marginBottom: '60px'}}>
+          <h2 style={{
+            fontSize: '2rem',
+            fontWeight: 700,
+            textAlign: 'center',
+            marginBottom: '40px',
+            color: 'var(--text-primary)'
+          }}>
+            常见问题
+          </h2>
+
+          <div style={{
+            maxWidth: '700px',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                style={{
+                  background: 'var(--bg-card)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  overflow: 'hidden'
+                }}
+              >
+                <button
+                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+                  style={{
+                    width: '100%',
+                    padding: '20px 24px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    textAlign: 'left'
+                  }}
+                >
+                  <span style={{
+                    fontSize: '15px',
+                    fontWeight: 600,
+                    color: 'var(--text-primary)'
+                  }}>
+                    {faq.q}
+                  </span>
+                  <span style={{
+                    fontSize: '18px',
+                    color: 'var(--text-muted)',
+                    transition: 'transform var(--transition-fast)'
+                  }}>
+                    {openFaq === index ? '−' : '+'}
+                  </span>
+                </button>
+                {openFaq === index && (
+                  <div style={{
+                    padding: '0 24px 20px',
+                    fontSize: '14px',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.7
+                  }}>
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
-          <div className="bg-muted/30 rounded-lg p-6">
-            <h3 className="font-semibold mb-2">支持退款吗？</h3>
-            <p className="text-sm text-muted-foreground">
-              如果你在购买后7天内不满意，可以申请全额退款。
-            </p>
-          </div>
-          <div className="bg-muted/30 rounded-lg p-6">
-            <h3 className="font-semibold mb-2">如何获取企业版？</h3>
-            <p className="text-sm text-muted-foreground">
-              企业版需要联系我们销售团队，可以享受定制化服务和批量折扣。
-            </p>
-          </div>
+        </div>
+
+        {/* CTA */}
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 24px',
+          background: 'var(--bg-secondary)',
+          borderRadius: 'var(--radius-xl)',
+          border: '1px solid var(--border-subtle)'
+        }}>
+          <h3 style={{
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            marginBottom: '12px',
+            color: 'var(--text-primary)'
+          }}>
+            还在犹豫？
+          </h3>
+          <p style={{
+            color: 'var(--text-secondary)',
+            marginBottom: '24px'
+          }}>
+            先从免费版开始，体验产品核心功能
+          </p>
+          <Link href="/register" className="btn-primary" style={{
+            textDecoration: 'none',
+            display: 'inline-block',
+            padding: '14px 32px'
+          }}>
+            免费开始探索
+          </Link>
         </div>
       </div>
     </div>

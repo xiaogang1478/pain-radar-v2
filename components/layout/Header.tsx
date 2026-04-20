@@ -1,99 +1,136 @@
 'use client';
-
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useCurrentUser, useLogout } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { mainNav, dashboardNav } from '@/config/navigation';
+import { useState, useEffect } from 'react';
+
+interface User { id: number; email: string; nickname: string; memberType: string; }
 
 export function Header() {
-  const pathname = usePathname();
-  const { data: user, isLoading } = useCurrentUser();
-  const logout = useLogout();
-  
-  const handleLogout = async () => {
-    await logout.mutateAsync();
-    window.location.href = '/';
-  };
-  
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.json())
+      .then(data => {
+        if (data.success) setUser(data.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const navItems = [
+    { href: '/hot', label: '热点' },
+    { href: '/pain-points', label: '痛点' },
+    { href: '/pricing', label: '定价' },
+  ];
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+    <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 50,
+      background: 'rgba(10, 14, 23, 0.85)',
+      backdropFilter: 'blur(12px)',
+      WebkitBackdropFilter: 'blur(12px)',
+      borderBottom: '1px solid var(--border-subtle)'
+    }}>
+      <div style={{
+        maxWidth: '1280px',
+        margin: '0 auto',
+        padding: '0 24px',
+        height: '72px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <div className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            痛点雷达
+        <Link href="/" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          textDecoration: 'none'
+        }}>
+          <div style={{
+            width: '36px',
+            height: '36px',
+            background: 'linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-dark) 100%)',
+            borderRadius: '10px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 700,
+            color: 'var(--bg-primary)',
+            fontSize: '16px'
+          }}>
+            🎯
           </div>
-          <Badge variant="secondary" className="text-xs">
-            中国版 PainHunt
-          </Badge>
+          <span style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: 'var(--text-primary)'
+          }}>
+            痛点雷达
+          </span>
         </Link>
-        
-        {/* Navigation */}
-        <nav className="hidden md:flex items-center space-x-6">
-          {mainNav.map((item) => (
+
+        {/* Desktop Nav */}
+        <nav style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }} className="hidden md:flex">
+          {navItems.map(item => (
             <Link
               key={item.href}
               href={item.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === item.href
-                  ? 'text-primary'
-                  : 'text-muted-foreground'
-              }`}
+              style={{
+                padding: '8px 16px',
+                color: 'var(--text-secondary)',
+                textDecoration: 'none',
+                fontSize: '14px',
+                fontWeight: 500,
+                borderRadius: 'var(--radius-sm)',
+                transition: 'all var(--transition-fast)'
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = 'var(--text-primary)';
+                e.currentTarget.style.background = 'var(--bg-card)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = 'var(--text-secondary)';
+                e.currentTarget.style.background = 'transparent';
+              }}
             >
-              {item.title}
+              {item.label}
             </Link>
           ))}
         </nav>
-        
-        {/* User Menu */}
-        <div className="flex items-center space-x-4">
-          {isLoading ? (
-            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
-          ) : user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-gradient-to-r from-purple-600 to-blue-600 text-white">
-                      {user.nickname?.[0] || user.email[0].toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <div className="flex items-center justify-start gap-2 p-2">
-                  <div className="flex flex-col space-y-0.5 leading-none">
-                    <p className="text-sm font-medium">{user.nickname || user.email}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                {dashboardNav.map((item) => (
-                  <DropdownMenuItem key={item.href}>
-                    <Link href={item.href} className="w-full">{item.title}</Link>
-                  </DropdownMenuItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                  退出登录
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+        {/* Auth Buttons */}
+        <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+          {!loading && user ? (
+            <>
+              <Link href="/dashboard" className="btn-ghost" style={{textDecoration: 'none', fontSize: '14px'}}>
+                {user.nickname || user.email.split('@')[0]}
+              </Link>
+              <Link href="/api/auth/logout" className="btn-ghost" style={{textDecoration: 'none', fontSize: '14px'}}>
+                退出
+              </Link>
+            </>
           ) : (
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" href="/login">登录</Button>
-              <Button href="/register">注册</Button>
-            </div>
+            <>
+              <Link href="/login" className="btn-ghost" style={{textDecoration: 'none', fontSize: '14px'}}>
+                登录
+              </Link>
+              <Link href="/register" className="btn-primary" style={{
+                textDecoration: 'none',
+                fontSize: '14px',
+                padding: '10px 20px'
+              }}>
+                免费开始
+              </Link>
+            </>
           )}
         </div>
       </div>
