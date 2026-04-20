@@ -33,6 +33,7 @@ export default function SubscribeModal({
       const res = await fetch('/api/payment/create-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ plan: plan.toLowerCase(), period }),
       });
       
