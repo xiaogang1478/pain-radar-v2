@@ -2,9 +2,14 @@
  * 榜眼数据同步脚本
  * 从 tophubdata.com API 获取热点数据并存储到数据库
  */
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL || 'postgresql://petapp:PetApp2024!@pgm-j6c99kn9x816j3k2qo.pg.rds.aliyuncs.com:5432/pain_radar';
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 const API_BASE = 'https://api.tophubdata.com';
 const API_KEY = process.env.TOPHUB_API_KEY || 'd7868442656a1f0ca75c9bd035c02f6f';
