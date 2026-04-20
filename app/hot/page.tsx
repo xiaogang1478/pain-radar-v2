@@ -172,6 +172,7 @@ export default function HotPage() {
               {POPULAR_PLATFORMS.map(platform => (
                 <button
                   key={platform.hashid}
+                  title={platform.hasData ? platform.display : `${platform.display} (暂无数据)`}
                   onClick={() => { 
                     if (!platform.hasData) return;
                     setSelectedPlatform(platform.hashid); 
@@ -182,7 +183,6 @@ export default function HotPage() {
                     cursor: platform.hasData ? 'pointer' : 'not-allowed',
                     border: 'none',
                     opacity: platform.hasData ? 1 : 0.5,
-                    title: platform.hasData ? platform.display : `${platform.display} (暂无数据)`
                   }}
                 >
                   {platform.display}
