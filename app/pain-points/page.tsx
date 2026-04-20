@@ -19,20 +19,27 @@ interface PainPoint {
   url: string;
 }
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: '', name: '全部' },
-  { id: '融资创业', name: '融资创业' },
-  { id: '市场竞争', name: '市场竞争' },
-  { id: '产品研发', name: '产品研发' },
-  { id: '团队管理', name: '团队管理' },
-  { id: '市场营销', name: '市场营销' },
-  { id: '用户运营', name: '用户运营' },
-  { id: '技术选型', name: '技术选型' },
+  { id: '综合其他', name: '综合其他' },
+  { id: '问题困扰', name: '问题困扰' },
+  { id: '健康医疗', name: '健康医疗' },
+  { id: '价格消费', name: '价格消费' },
+  { id: '服务售后', name: '服务售后' },
+  { id: '创业赚钱', name: '创业赚钱' },
+  { id: '金融投资', name: '金融投资' },
+  { id: '科技互联网', name: '科技互联网' },
+  { id: '情绪心理', name: '情绪心理' },
+  { id: '教育就业', name: '教育就业' },
+  { id: '安全生活', name: '安全生活' },
+  { id: '效率体验', name: '效率体验' },
+  { id: '质量品质', name: '质量品质' },
 ];
 
 export default function PainPointsPage() {
   const [painPoints, setPainPoints] = useState<PainPoint[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [minScore, setMinScore] = useState(5);
   const [page, setPage] = useState(1);
@@ -58,6 +65,18 @@ export default function PainPointsPage() {
         if (data.success) {
           setPainPoints(data.data?.items || []);
           setTotalPages(data.data?.totalPages || 1);
+          // 动态更新分类列表
+          if (data.data?.items?.length > 0) {
+            const cats = data.data.items.map((p: PainPoint) => p.category).filter(Boolean);
+            const uniqueCats = [...new Set(cats)];
+            const catMap: Record<string, string> = {};
+            uniqueCats.forEach(c => { catMap[c] = c; });
+            const dynamicCats = [{ id: '', name: '全部' }];
+            Object.keys(catMap).sort().forEach(c => {
+              dynamicCats.push({ id: c, name: c });
+            });
+            setCategories(dynamicCats);
+          }
         }
         setLoading(false);
       })
@@ -231,7 +250,7 @@ export default function PainPointsPage() {
               分类筛选：
             </span>
             <div style={{display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat.id}
                   onClick={() => { setSelectedCategory(cat.id); setPage(1); }}
