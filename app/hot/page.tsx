@@ -15,21 +15,12 @@ interface HotItem {
   extra?: string;
 }
 
-// Popular platforms to show by default (most active platforms with hot content)
+// Popular platforms - only include platforms that have hot items in database
 const POPULAR_PLATFORMS = [
-  { hashid: 'mproPpoq6O', display: '知乎热榜', name: '知乎' },
   { hashid: 'Jb0vmloB1G', display: '百度实时热点', name: '百度' },
   { hashid: 'K7GdaMgdQy', display: '抖音热搜', name: '抖音' },
   { hashid: 'b0vmbRXdB1', display: 'B站每周必看', name: '哔哩哔哩' },
   { hashid: '74KvxwokxM', display: 'B站全站日榜', name: '哔哩哔哩' },
-  { hashid: '36Kr', display: '36氪', name: '36氪' },
-  { hashid: 'gefer', display: '虎嗅', name: '虎嗅' },
-  { hashid: 'HqOs', display: 'IT之家', name: 'IT之家' },
-  { hashid: 'i4CN', display: 'App Store', name: 'App Store' },
-  { hashid: 'weibo', display: '微博热搜', name: '微博' },
-  { hashid: 'douyin', display: '抖音', name: '抖音' },
-  { hashid: 'xiaohongshu', display: '小红书', name: '小红书' },
-  { hashid: 'toutiao', display: '今日头条', name: '今日头条' },
 ];
 
 export default function HotPage() {
