@@ -40,7 +40,10 @@ async function syncNodes() {
   let hasMore = true;
   let totalPlatforms = 0;
   
-  while (hasMore) {
+  // 只获取前5页（主要平台）
+  const maxPages = 5;
+  
+  while (hasMore && page <= maxPages) {
     const nodes = await fetchNodes(page);
     
     if (nodes.length === 0) {
@@ -73,12 +76,8 @@ async function syncNodes() {
     }
     
     console.log(`  第${page}页完成，获取${nodes.length}个平台`);
-    
-    if (nodes.length < 100) {
-      hasMore = false;
-    } else {
-      page++;
-    }
+    hasMore = false; // 限制页数
+    page++;
     
     // 避免请求过快
     await new Promise(resolve => setTimeout(resolve, 500));
