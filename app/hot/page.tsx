@@ -15,13 +15,21 @@ interface HotItem {
   extra?: string;
 }
 
-// Popular platforms - only include platforms that have hot items in database
+// Popular platforms - includes platforms with data and popular platforms without data
 const POPULAR_PLATFORMS = [
-  { hashid: 'Jb0vmloB1G', display: '百度实时热点', name: '百度' },
-  { hashid: 'K7GdaMgdQy', display: '抖音热搜', name: '抖音' },
-  { hashid: 'b0vmbRXdB1', display: 'B站每周必看', name: '哔哩哔哩' },
-  { hashid: '74KvxwokxM', display: 'B站全站日榜', name: '哔哩哔哩' },
+  { hashid: 'Jb0vmloB1G', display: '百度实时热点', name: '百度', hasData: true },
+  { hashid: 'K7GdaMgdQy', display: '抖音热搜', name: '抖音', hasData: true },
+  { hashid: 'b0vmbRXdB1', display: 'B站每周必看', name: '哔哩哔哩', hasData: true },
+  { hashid: '74KvxwokxM', display: 'B站全站日榜', name: '哔哩哔哩', hasData: true },
+  { hashid: '36Kr', display: '36氪', name: '36氪', hasData: false },
+  { hashid: 'weibo', display: '微博热搜', name: '微博', hasData: false },
+  { hashid: 'toutiao', display: '头条热点', name: '今日头条', hasData: false },
+  { hashid: 'zhihu', display: '知乎热榜', name: '知乎', hasData: false },
+  { hashid: 'xiaohongshu', display: '小红书热门', name: '小红书', hasData: false },
+  { hashid: 'douyin', display: '抖音榜单', name: '抖音', hasData: false },
 ];
+
+interface PlatformOption { hashid: string; display: string; name: string; hasData: boolean; }
 
 export default function HotPage() {
   const [hotItems, setHotItems] = useState<HotItem[]>([]);
@@ -164,11 +172,21 @@ export default function HotPage() {
               {POPULAR_PLATFORMS.map(platform => (
                 <button
                   key={platform.hashid}
-                  onClick={() => { setSelectedPlatform(platform.hashid); setPage(1); }}
+                  onClick={() => { 
+                    if (!platform.hasData) return;
+                    setSelectedPlatform(platform.hashid); 
+                    setPage(1); 
+                  }}
                   className={selectedPlatform === platform.hashid ? 'badge badge-gold' : 'badge'}
-                  style={{cursor: 'pointer', border: 'none'}}
+                  style={{
+                    cursor: platform.hasData ? 'pointer' : 'not-allowed',
+                    border: 'none',
+                    opacity: platform.hasData ? 1 : 0.5,
+                    title: platform.hasData ? platform.display : `${platform.display} (暂无数据)`
+                  }}
                 >
                   {platform.display}
+                  {!platform.hasData && ' 🔒'}
                 </button>
               ))}
               {showAllPlatforms && (
