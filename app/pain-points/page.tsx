@@ -67,7 +67,7 @@ export default function PainPointsPage() {
           setTotalPages(data.data?.totalPages || 1);
           // 动态更新分类列表
           if (data.data?.items?.length > 0) {
-            const cats = data.data.items.map((p: PainPoint) => p.category).filter(Boolean);
+            const cats = data.data.items.map((p: PainPoint) => p.category).filter(Boolean) as string[];
             const uniqueCats = [...new Set(cats)];
             const catMap: Record<string, string> = {};
             uniqueCats.forEach(c => { catMap[c] = c; });
