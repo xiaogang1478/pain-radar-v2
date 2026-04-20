@@ -119,7 +119,6 @@ async function syncHotItems() {
               title: item.title || '',
               description: item.description || '',
               url: item.url || '',
-              thumbnail: item.thumbnail || '',
               extra: item.extra || '',
               heatValue: heatValue,
             },
