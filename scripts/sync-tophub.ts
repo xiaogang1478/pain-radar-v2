@@ -55,17 +55,15 @@ async function syncNodes() {
           update: {
             name: node.name,
             display: node.display,
-            domain: node.domain,
-            logo: node.logo,
-            categoryId: parseInt(node.cid) || 0,
+            icon: node.logo || null,
+            url: node.domain || null,
           },
           create: {
             hashid: node.hashid,
             name: node.name,
             display: node.display,
-            domain: node.domain,
-            logo: node.logo,
-            categoryId: parseInt(node.cid) || 0,
+            icon: node.logo || null,
+            url: node.domain || null,
           },
         });
         totalPlatforms++;
