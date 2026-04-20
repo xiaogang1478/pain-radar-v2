@@ -49,7 +49,7 @@ export default function DashboardPage() {
     }
   };
 
-  const handleSubscribe = (plan: typeof user!.plans[0]) => {
+  const handleSubscribe = (plan: UserData["plans"][0]) => {
     setSelectedPlan({
       id: plan.id,
       name: plan.name,
