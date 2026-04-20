@@ -114,9 +114,19 @@ export function Header() {
               <Link href="/dashboard" className="btn-ghost" style={{textDecoration: 'none', fontSize: '14px'}}>
                 {user.nickname || user.email.split('@')[0]}
               </Link>
-              <Link href="/api/auth/logout" className="btn-ghost" style={{textDecoration: 'none', fontSize: '14px'}}>
+              <button 
+                onClick={() => {
+                  fetch('/api/auth/logout', { method: 'POST' })
+                    .then(() => {
+                      setUser(null);
+                      window.location.href = '/';
+                    });
+                }}
+                className="btn-ghost"
+                style={{textDecoration: 'none', fontSize: '14px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)'}}
+              >
                 退出
-              </Link>
+              </button>
             </>
           ) : (
             <>
