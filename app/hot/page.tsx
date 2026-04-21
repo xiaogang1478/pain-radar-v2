@@ -17,17 +17,16 @@ interface HotItem {
 
 // Popular platforms - includes platforms with data and popular platforms without data
 const POPULAR_PLATFORMS = [
-  { hashid: 'Jb0vmloB1G', display: '百度实时热点', name: '百度', hasData: true },
-  { hashid: 'K7GdaMgdQy', display: '抖音热搜', name: '抖音', hasData: true },
-  { hashid: 'b0vmbRXdB1', display: 'B站每周必看', name: '哔哩哔哩', hasData: true },
-  { hashid: '74KvxwokxM', display: 'B站全站日榜', name: '哔哩哔哩', hasData: true },
-  { hashid: '36Kr', display: '36氪', name: '36氪', hasData: false },
-  { hashid: 'weibo', display: '微博热搜', name: '微博', hasData: false },
-  { hashid: 'toutiao', display: '头条热点', name: '今日头条', hasData: false },
-  { hashid: 'zhihu', display: '知乎热榜', name: '知乎', hasData: false },
-  { hashid: 'xiaohongshu', display: '小红书热门', name: '小红书', hasData: false },
-  { hashid: 'douyin', display: '抖音榜单', name: '抖音', hasData: false },
+  { hashid: 'weibo', display: '微博热搜', name: '微博', source: 'scrape', hasData: true },
+  { hashid: 'baidu', display: '百度热搜', name: '百度', source: 'scrape', hasData: true },
+  { hashid: 'douyin', display: '抖音热搜', name: '抖音', source: 'scrape', hasData: true },
+  { hashid: '36Kr', display: '36氪', name: '36氪', source: 'none', hasData: false },
+  { hashid: 'toutiao', display: '头条热点', name: '今日头条', source: 'none', hasData: false },
+  { hashid: 'zhihu', display: '知乎热榜', name: '知乎', source: 'scrape', hasData: false },
+  { hashid: 'xiaohongshu', display: '小红书热门', name: '小红书', source: 'none', hasData: false },
 ];
+
+interface PlatformOption { hashid: string; display: string; name: string; source: string; hasData: boolean; }
 
 interface PlatformOption { hashid: string; display: string; name: string; hasData: boolean; }
 
@@ -44,30 +43,69 @@ export default function HotPage() {
     fetchHotItems();
   }, [selectedPlatform, searchQuery, page]);
 
-  const fetchHotItems = () => {
+  const fetchHotItems = async () => {
     setLoading(true);
-    const params = new URLSearchParams({
-      page: page.toString(),
-      pageSize: '24',
-    });
     
-    if (selectedPlatform) {
-      params.set('platform', selectedPlatform);
-    }
-    if (searchQuery) {
-      params.set('q', searchQuery);
-    }
+    // 检查平台配置
+    const platformConfig = POPULAR_PLATFORMS.find(p => p.hashid === selectedPlatform);
     
-    fetch(`/api/hot-items?${ params }`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          setHotItems(data.data?.items || []);
-          setTotalPages(data.data?.totalPages || 1);
+    // 使用多平台API获取数据（有数据的平台）
+    if (platformConfig?.hasData || platformConfig?.source === 'scrape') {
+      // 使用多平台API获取数据
+      try {
+        const response = await fetch(`/api/multi-platform-hotspots?platform=${selectedPlatform}&page=${page}&pageSize=24`);
+        const data = await response.json();
+        
+        if (data.success && data.data?.items) {
+          // 转换平台数据格式
+          const items = data.data.items.map((item: any, index: number) => ({
+            id: `${selectedPlatform}-${index}`,
+            title: item.title,
+            platformName: data.data.platformName || platformConfig?.name || selectedPlatform,
+            platformDisplay: platformConfig?.display || data.data.platformName || selectedPlatform,
+            heatValue: item.heat || item.rank * 100000 || 0,
+            url: item.url || (item.title ? `https://www.google.com/search?q=${encodeURIComponent(item.title)}` : '#'),
+            createdAt: data.data.updatedAt || new Date().toISOString(),
+          }));
+          
+          setHotItems(items);
+          setTotalPages(Math.ceil(data.data.total / 24) || 1);
+        } else {
+          setHotItems([]);
+          setTotalPages(1);
         }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } catch (error) {
+        console.error('Failed to fetch weibo hot:', error);
+        setHotItems([]);
+      }
+    } else {
+      // 使用原有榜眼API
+      const params = new URLSearchParams({
+        page: page.toString(),
+        pageSize: '24',
+      });
+      
+      if (selectedPlatform) {
+        params.set('platform', selectedPlatform);
+      }
+      if (searchQuery) {
+        params.set('q', searchQuery);
+      }
+      
+      fetch(`/api/hot-items?${params}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success) {
+            setHotItems(data.data?.items || []);
+            setTotalPages(data.data?.totalPages || 1);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+      return;
+    }
+    
+    setLoading(false);
   };
 
   const getHeatColor = (heat: number) => {
@@ -176,6 +214,7 @@ export default function HotPage() {
                   onClick={() => { 
                     if (!platform.hasData) return;
                     setSelectedPlatform(platform.hashid); 
+                    setSearchQuery(''); // 切换平台时清空搜索
                     setPage(1); 
                   }}
                   className={selectedPlatform === platform.hashid ? 'badge badge-gold' : 'badge'}

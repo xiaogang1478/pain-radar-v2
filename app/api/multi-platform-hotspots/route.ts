@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchAllPlatforms, fetchPlatform } from '@/scripts/fetch-multi-platform';
+import { fetchPlatform } from '@/scripts/fetch-multi-platform';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -8,32 +8,25 @@ export async function GET(request: Request) {
   const pageSize = parseInt(searchParams.get('pageSize') || '20');
 
   try {
-    let data;
-    const allData = await fetchAllPlatforms();
-    
+    let data: any;
+
     if (platform) {
-      // 获取单个平台
-      const platformData = allData[platform];
-      if (!platformData) {
-        return NextResponse.json({
-          success: false,
-          error: `未知平台: ${platform}`
-        }, { status: 400 });
-      }
-      
-      const items = platformData.items || [];
+      // 只获取指定平台的数据，避免超时
+      const items = await fetchPlatform(platform);
       data = {
         platform,
-        platformName: platformData.platformName,
+        platformName: platform,
         items: items.slice((page - 1) * pageSize, page * pageSize),
         total: items.length,
         page,
-        pageSize,
-        updatedAt: platformData.updatedAt
+        pageSize
       };
     } else {
-      // 返回所有平台
-      data = allData;
+      // 不获取所有平台，返回错误提示
+      return NextResponse.json({
+        success: false,
+        error: '请指定平台参数: ?platform=weibo'
+      }, { status: 400 });
     }
 
     return NextResponse.json({

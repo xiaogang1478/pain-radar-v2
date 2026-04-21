@@ -45,10 +45,11 @@ export default function PainPointsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPain, setSelectedPain] = useState<PainPoint | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchPainPoints();
-  }, [selectedCategory, minScore, page]);
+  }, [selectedCategory, minScore, page, searchQuery]);
 
   const fetchPainPoints = () => {
     setLoading(true);
@@ -228,6 +229,38 @@ export default function PainPointsPage() {
                 痛度×商业价值 &gt; 60分的痛点是高优先级创业机会
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+          <div style={{position: 'relative', flex: '1', minWidth: '250px', maxWidth: '400px'}}>
+            <input
+              type="text"
+              placeholder="搜索痛点内容..."
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
+              style={{
+                width: '100%',
+                padding: '12px 16px 12px 44px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-default)',
+                background: 'var(--bg-card)',
+                color: 'var(--text-primary)',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+            <span style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              fontSize: '18px',
+              pointerEvents: 'none'
+            }}>
+              🔍
+            </span>
           </div>
         </div>
 

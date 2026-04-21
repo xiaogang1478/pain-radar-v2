@@ -21,31 +21,40 @@ interface HotItem {
   platform: string;
 }
 
-// 微博热搜抓取
+// 微博热搜 - 通过榜眼API获取（解决微博API限制）
 async function fetchWeibo(): Promise<HotItem[]> {
   try {
-    const response = await fetch('https://weibo.com/ajax/side/hotSearch', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://weibo.com'
-      },
-      timeout: 10000
+    const API_KEY = 'd7868442656a1f0ca75c9bd035c02f6f'; // 直接写死
+    const response = await fetch('https://api.tophubdata.com/nodes/KqndgxeLl9', {
+      headers: { 'Authorization': API_KEY }
     });
     
-    const data = await response.json() as any;
+    const result = await response.json() as any;
     
-    if (data.ok === 1 && data.data?.realtime) {
-      return data.data.realtime.map((item: any, index: number) => ({
-        title: item.word,
-        rank: index + 1,
-        heat: item.raw_hot,
-        url: `https://s.weibo.com/weibo?q=${encodeURIComponent(item.word)}`,
-        platform: 'weibo'
-      }));
+    if (result.data?.items && result.data.items.length > 0) {
+      return result.data.items.map((item: any, index: number) => {
+        // 热度值转换："147万" -> 1470000
+        let heat = 0;
+        const extraStr = item.extra || '';
+        if (extraStr.includes('万')) {
+          heat = parseFloat(extraStr) * 10000;
+        } else if (extraStr.includes('亿')) {
+          heat = parseFloat(extraStr) * 100000000;
+        } else {
+          heat = parseFloat(extraStr) || 0;
+        }
+        
+        return {
+          title: item.title,
+          rank: item.rank || index + 1,
+          heat: heat,
+          url: `https://weibo.com/p/100808${encodeURIComponent(item.title)}/info`,
+          platform: 'weibo'
+        };
+      });
     }
     
-    console.log('[微博] 数据格式变化，使用备用方案');
+    console.log('[微博] 榜眼API返回空数据');
     return [];
   } catch (error) {
     console.log('[微博] 获取失败:', error instanceof Error ? error.message : 'Unknown error');
@@ -62,7 +71,7 @@ async function fetchZhihu(): Promise<HotItem[]> {
         'Accept': 'application/json',
         'Referer': 'https://www.zhihu.com'
       },
-      timeout: 10000
+      
     });
     
     const data = await response.json() as any;
@@ -151,4 +160,4 @@ export async function fetchPlatform(platform: string): Promise<HotItem[]> {
 }
 
 // 导出类型
-export { HotItem, PlatformConfig };
+export type { HotItem, PlatformConfig };
